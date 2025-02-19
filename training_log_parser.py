@@ -73,6 +73,7 @@ class TrainingLogParser:
             if "Training steps:" in line:
                 # Set status to training if we see this
                 self.state.status = "training"
+                print("setting status to 'training'")
                 if not self.state.start_time:
                     self.state.start_time = datetime.now()
 

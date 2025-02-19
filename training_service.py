@@ -29,7 +29,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('training_service.log')
+        logging.FileHandler(str(OUTPUT_PATH / 'training_service.log'))
     ]
 )
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class TrainingService:
 
     def get_status(self) -> Dict:
         """Get current training status"""
-        default_status = {'state': 'stopped', 'message': 'No training in progress'}
+        default_status = {'status': 'stopped', 'message': 'No training in progress'}
         
         if not self.status_file.exists():
             return default_status
@@ -73,6 +73,7 @@ class TrainingService:
         try:
             with open(self.status_file, 'r') as f:
                 status = json.load(f)
+                print("status found in the json:", status)
                 
             # Check if process is actually running
             if self.pid_file.exists():
@@ -80,12 +81,12 @@ class TrainingService:
                     pid = int(f.read().strip())
                 if not psutil.pid_exists(pid):
                     # Process died unexpectedly
-                    if status['state'] == 'running':
-                        status['state'] = 'error'
+                    if status['status'] == 'running':
+                        status['status'] = 'error'
                         status['message'] = 'Training process terminated unexpectedly'
                         self.append_log("Training process terminated unexpectedly")
                     else:
-                        status['state'] = 'stopped'
+                        status['status'] = 'stopped'
                         status['message'] = 'Training process not found'
             return status
             
@@ -432,7 +433,7 @@ class TrainingService:
     def save_status(self, state: str, **kwargs) -> None:
         """Save current training status"""
         status = {
-            'state': state,
+            'status': state,
             'timestamp': datetime.now().isoformat(),
             **kwargs
         }

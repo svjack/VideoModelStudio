@@ -63,6 +63,8 @@ class VideoTrainerUI:
         """Update UI components based on training state"""
         updates = {}
         
+        print("update_training_ui: training_state = ", training_state)
+
         # Update status box with high-level information
         status_text = []
         if training_state["status"] != "idle":
@@ -258,10 +260,13 @@ class VideoTrainerUI:
     
     def update_training_buttons(self, training_state: Dict[str, Any]) -> Dict:
         """Update training control buttons based on state"""
+        #print("update_training_buttons: training_state = ", training_state)
         is_training = training_state["status"] in ["training", "initializing"]
+        if  training_state["message"] == "No training in progress":
+            is_training = False
         is_paused = training_state["status"] == "paused"
         is_completed = training_state["status"] in ["completed", "error", "stopped"]
-        
+        #print(f"update_training_buttons: is_training = {is_training}, is_paused = {is_paused}, is_completed = {is_completed}")
         return {
             "start_btn": gr.Button(
                 interactive=not is_training and not is_paused,
@@ -289,8 +294,10 @@ class VideoTrainerUI:
         })
     
     def handle_pause_resume(self):
+
         status = self.trainer.get_status()
-        if status["state"] == "paused":
+        print("handle_pause_resume: status = ", status)
+        if status["status"] == "paused":
             result = self.trainer.resume_training()
             new_state = {"status": "training"}
         else:
@@ -623,6 +630,8 @@ class VideoTrainerUI:
 
         status_update = status["message"]
 
+        # print(f"refresh_training_status_and_logs: ", status)
+
         # Parse new log lines
         if logs:
             last_state = None
@@ -630,6 +639,7 @@ class VideoTrainerUI:
                 state_update = self.log_parser.parse_line(line)
                 if state_update:
                     last_state = state_update
+                    print("last_state = ", last_state)
             
             if last_state:
                 ui_updates = self.update_training_ui(last_state)
@@ -647,6 +657,8 @@ class VideoTrainerUI:
             "status": "completed" if is_completed else "training",
             "message": status
         }
+        
+        #print("refresh_training_status: current_state = ", current_state)
         
         if is_completed:
             button_updates = self.handle_training_complete()
@@ -1129,9 +1141,7 @@ class VideoTrainerUI:
                 ],
                 outputs=[status_box, log_box]
             ).success(
-                fn=lambda: self.update_training_buttons({
-                    "status": "training"
-                }),
+                fn=lambda: self.update_training_buttons(),
                 outputs=[start_btn, stop_btn, pause_resume_btn]
             )
 
