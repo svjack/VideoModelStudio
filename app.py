@@ -1136,7 +1136,7 @@ class VideoTrainerUI:
             )
 
 
-             pause_resume_btn.click(
+            pause_resume_btn.click(
                 fn=self.handle_pause_resume,
                 outputs=[status_box, log_box, start_btn, stop_btn, pause_resume_btn]
             )
