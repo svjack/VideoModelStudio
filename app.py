@@ -1208,11 +1208,14 @@ class VideoTrainerUI:
             timer = gr.Timer(value=1)
             timer.tick(
                 fn=lambda: (
-                    self.refresh_training_status_and_logs()
+                    self.refresh_training_status()
                 ),
                 outputs=[
                     status_box,
-                    log_box
+                    log_box,
+                     start_btn,
+                    stop_btn,
+                    pause_resume_btn
                 ]
             )
 
