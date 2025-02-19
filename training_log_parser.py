@@ -66,14 +66,18 @@ class TrainingLogParser:
         """Parse a single log line and update state"""
         try:
             # For debugging
-            logger.info(f"Parsing line: {line[:100]}...")
+            #logger.info(f"Parsing line: {line[:100]}...")
 
             # Training step progress line example:
             # Training steps:   1%|▏         | 1/70 [00:14<16:11, 14.08s/it, grad_norm=0.00789, step_loss=0.555, lr=3e-7]
+            
+            if ("Started training" in line) or (("Starting training" in line):
+                self.state.status = "training"
+            
             if "Training steps:" in line:
                 # Set status to training if we see this
                 self.state.status = "training"
-                print("setting status to 'training'")
+                #print("setting status to 'training'")
                 if not self.state.start_time:
                     self.state.start_time = datetime.now()
 

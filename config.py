@@ -16,7 +16,8 @@ STAGING_PATH = STORAGE_PATH / "staging"                    # This is where files
 TRAINING_PATH = STORAGE_PATH / "training"                  # Folder containing the final training dataset
 TRAINING_VIDEOS_PATH = TRAINING_PATH / "videos"            # Captioned clips ready for training
 MODEL_PATH = STORAGE_PATH / "model"                        # Model checkpoints and files
-OUTPUT_PATH = STORAGE_PATH / "output"                      # Training outputs and logs
+OUTPUT_PATH = STORAGE_PATH / "output"                  # Training outputs and logs
+LOG_FILE_PATH = OUTPUT_PATH / "last_session.log"
 
 # On the production server we can afford to preload the big model
 PRELOAD_CAPTIONING_MODEL = parse_bool_env(os.environ.get('PRELOAD_CAPTIONING_MODEL'))
@@ -66,6 +67,8 @@ TRAINING_HEIGHT = 512 # 32 * 16
 # right now, finetrainers will crash if that happens, so the workaround is to have more buckets in here
         
 TRAINING_BUCKETS = [
+    (1, TRAINING_HEIGHT, TRAINING_WIDTH), #  1
+    (8 + 1, TRAINING_HEIGHT, TRAINING_WIDTH), # 8 + 1
     (8 * 2 + 1, TRAINING_HEIGHT, TRAINING_WIDTH), # 16 + 1
     (8 * 4 + 1, TRAINING_HEIGHT, TRAINING_WIDTH), # 32 + 1
     (8 * 6 + 1, TRAINING_HEIGHT, TRAINING_WIDTH), # 48 + 1

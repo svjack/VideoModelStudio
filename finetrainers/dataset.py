@@ -266,9 +266,9 @@ class ImageOrVideoDatasetWithResizing(ImageOrVideoDataset):
     def _preprocess_video(self, path: Path) -> torch.Tensor:
         video_reader = decord.VideoReader(uri=path.as_posix())
         video_num_frames = len(video_reader)
-        print(f"ImageOrVideoDatasetWithResizing: self.resolution_buckets = ", self.resolution_buckets)
-        print(f"ImageOrVideoDatasetWithResizing: self.max_num_frames = ", self.max_num_frames)
-        print(f"ImageOrVideoDatasetWithResizing: video_num_frames = ", video_num_frames)
+        #print(f"ImageOrVideoDatasetWithResizing: self.resolution_buckets = ", self.resolution_buckets)
+        #print(f"ImageOrVideoDatasetWithResizing: self.max_num_frames = ", self.max_num_frames)
+        #print(f"ImageOrVideoDatasetWithResizing: video_num_frames = ", video_num_frames)
         
         video_buckets = [bucket for bucket in self.resolution_buckets if bucket[0] <= video_num_frames]
         

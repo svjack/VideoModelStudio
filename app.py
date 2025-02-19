@@ -36,7 +36,7 @@ from splitting_service import SplittingService
 from import_service import ImportService
 from config import (
     STORAGE_PATH, VIDEOS_TO_SPLIT_PATH, STAGING_PATH,
-    TRAINING_PATH, TRAINING_VIDEOS_PATH, MODEL_PATH, OUTPUT_PATH, DEFAULT_CAPTIONING_BOT_INSTRUCTIONS,
+    TRAINING_PATH, LOG_FILE_PATH, TRAINING_VIDEOS_PATH, MODEL_PATH, OUTPUT_PATH, DEFAULT_CAPTIONING_BOT_INSTRUCTIONS,
     DEFAULT_PROMPT_PREFIX, HF_API_TOKEN, ASK_USER_TO_DUPLICATE_SPACE, MODEL_TYPES, TRAINING_BUCKETS
 )
 from utils import make_archive, count_media_files, format_media_title, is_image_file, is_video_file, validate_model_repo, format_time
@@ -133,6 +133,9 @@ class VideoTrainerUI:
             if self.splitter.is_processing():
                 self.splitter.processing = False
                 status_messages["splitting"] = "Scene detection stopped"
+            
+            if LOG_FILE_PATH.exists():
+                LOG_FILE_PATH.unlink()
             
             # Clear all data directories
             for path in [VIDEOS_TO_SPLIT_PATH, STAGING_PATH, TRAINING_VIDEOS_PATH, TRAINING_PATH,
@@ -258,15 +261,11 @@ class VideoTrainerUI:
         # Only return name and status columns for display
         return [[file[0], file[1]] for file in files]
     
-    def update_training_buttons(self, training_state: Dict[str, Any]) -> Dict:
+    def update_training_buttons(self, status: str) -> Dict:
         """Update training control buttons based on state"""
-        #print("update_training_buttons: training_state = ", training_state)
-        is_training = training_state["status"] in ["training", "initializing"]
-        if  training_state["message"] == "No training in progress":
-            is_training = False
-        is_paused = training_state["status"] == "paused"
-        is_completed = training_state["status"] in ["completed", "error", "stopped"]
-        #print(f"update_training_buttons: is_training = {is_training}, is_paused = {is_paused}, is_completed = {is_completed}")
+        is_training = status in ["training", "initializing"]
+        is_paused = status == "paused"
+        is_completed = status in ["completed", "error", "stopped"]
         return {
             "start_btn": gr.Button(
                 interactive=not is_training and not is_paused,
@@ -283,32 +282,20 @@ class VideoTrainerUI:
             )
         }
     
-    def handle_training_complete(self):
-        """Handle training completion"""
-        # Reset button states
-        return self.update_training_buttons({
-            "status": "completed",
-            "progress": "100%",
-            "current_step": 0,
-            "total_steps": 0
-        })
-    
     def handle_pause_resume(self):
+        status, _, _ = self.get_latest_status_message_and_logs()
 
-        status = self.trainer.get_status()
-        print("handle_pause_resume: status = ", status)
-        if status["status"] == "paused":
-            result = self.trainer.resume_training()
-            new_state = {"status": "training"}
+        if status == "paused":
+            self.trainer.resume_training()
         else:
-            result = self.trainer.pause_training()
-            new_state = {"status": "paused"}
-        return (
-            *result,
-            *self.update_training_buttons(new_state).values()
-        )
+            self.trainer.pause_training()
 
-    
+        return self.get_latest_status_message_logs_and_button_labels()
+
+    def handle_stop(self):
+        self.trainer.stop_training()
+        return self.get_latest_status_message_logs_and_button_labels()
+
     def handle_training_dataset_select(self, evt: gr.SelectData) -> Tuple[Optional[str], Optional[str], Optional[str]]:
         """Handle selection of both video clips and images"""
         try:
@@ -623,14 +610,9 @@ class VideoTrainerUI:
             return f"Error during scene detection: {str(e)}"
 
 
-    def refresh_training_status_and_logs(self):
-        """Refresh all dynamic lists and training state"""
-        status = self.trainer.get_status()
+    def get_latest_status_message_and_logs(self) -> Tuple[str, str, str]:
+        state = self.trainer.get_status()
         logs = self.trainer.get_logs()
-
-        status_update = status["message"]
-
-        # print(f"refresh_training_status_and_logs: ", status)
 
         # Parse new log lines
         if logs:
@@ -639,42 +621,28 @@ class VideoTrainerUI:
                 state_update = self.log_parser.parse_line(line)
                 if state_update:
                     last_state = state_update
-                    print("last_state = ", last_state)
             
             if last_state:
                 ui_updates = self.update_training_ui(last_state)
-                status_update = ui_updates.get("status_box", status["message"])
-        
-        return (status_update, logs)
-
-    def refresh_training_status(self):
-        """Refresh training status and update UI"""
-        status, logs = self.refresh_training_status_and_logs()
+                state["message"] = ui_updates.get("status_box", state["message"])
         
         # Parse status for training state
-        is_completed = "completed" in status.lower() or "100.0%" in status
-        current_state = {
-            "status": "completed" if is_completed else "training",
-            "message": status
-        }
-        
-        #print("refresh_training_status: current_state = ", current_state)
-        
-        if is_completed:
-            button_updates = self.handle_training_complete()
-            return (
-                status,
-                logs,
-                *button_updates.values()
-            )
-        
-        # Update based on current training state
-        button_updates = self.update_training_buttons(current_state)
+        if "completed" in state["message"].lower():
+            state["status"] = "completed"
+
+        return (state["status"], state["message"], logs)
+
+    def get_latest_status_message_logs_and_button_labels(self) -> Tuple[str, str, Any, Any, Any]:
+        status, message, logs = self.get_latest_status_message_and_logs()
         return (
-            status,
+            message,
             logs,
-            *button_updates.values()
+            *self.update_training_buttons(status).values()
         )
+
+    def get_latest_button_labels(self) -> Tuple[Any, Any, Any]:
+        status, message, logs = self.get_latest_status_message_and_logs()
+        return self.update_training_buttons(status).values()
     
     def refresh_dataset(self):
         """Refresh all dynamic lists and training state"""
@@ -1141,10 +1109,9 @@ class VideoTrainerUI:
                 ],
                 outputs=[status_box, log_box]
             ).success(
-                fn=lambda: self.update_training_buttons(),
-                outputs=[start_btn, stop_btn, pause_resume_btn]
+                fn=self.get_latest_status_message_logs_and_button_labels,
+                outputs=[status_box, log_box, start_btn, stop_btn, pause_resume_btn]
             )
-
 
             pause_resume_btn.click(
                 fn=self.handle_pause_resume,
@@ -1152,11 +1119,8 @@ class VideoTrainerUI:
             )
 
             stop_btn.click(
-                fn=self.trainer.stop_training,
-                outputs=[status_box, log_box]
-            ).success(
-                fn=self.handle_training_complete,
-                outputs=[start_btn, stop_btn, pause_resume_btn]
+                fn=self.handle_stop,
+                outputs=[status_box, log_box, start_btn, stop_btn, pause_resume_btn]
             )
 
             def handle_global_stop():
@@ -1218,12 +1182,12 @@ class VideoTrainerUI:
             timer = gr.Timer(value=1)
             timer.tick(
                 fn=lambda: (
-                    self.refresh_training_status()
+                    self.get_latest_status_message_logs_and_button_labels()
                 ),
                 outputs=[
                     status_box,
                     log_box,
-                     start_btn,
+                    start_btn,
                     stop_btn,
                     pause_resume_btn
                 ]
@@ -1239,7 +1203,7 @@ class VideoTrainerUI:
                 ]
             )
 
-            timer = gr.Timer(value=5)
+            timer = gr.Timer(value=6)
             timer.tick(
                 fn=lambda: self.update_titles(),
                 outputs=[
