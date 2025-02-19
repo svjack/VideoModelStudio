@@ -19,13 +19,13 @@ short_description: All-in-one tool for AI video training
 
 VMS is a Gradio app that wraps around Finetrainers, to provide a simple UI to train AI video models on Hugging Face.
 
-You can deploy it to your private space, and start long-running trainign jobs in the background.
+You can deploy it to a private space, and start long-running training jobs in the background.
 
 ### One-user-per-space design
 
 Currently CMS can only support one training job at a time, anybody with access to your Gradio app will be able to upload or delete everything etc.
 
-This means you have to run VMS in your own Hugging Face Space, or locally if you require full privacy.
+This means you have to run VMS in a *PRIVATE* HF Space, or locally if you require full privacy.
 
 ### Similar projects
 
@@ -47,7 +47,7 @@ VMS uses PySceneDetect to split scenes.
 
 VMS uses `LLaVA-Video-7B-Qwen2` for captioning. You can customize the system prompt if you want to.
 
-### Downlad your dataset
+### Download your dataset
 
 Not interested in using VMS for training? That's perfectly fine!
 
