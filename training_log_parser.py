@@ -71,7 +71,7 @@ class TrainingLogParser:
             # Training step progress line example:
             # Training steps:   1%|▏         | 1/70 [00:14<16:11, 14.08s/it, grad_norm=0.00789, step_loss=0.555, lr=3e-7]
             
-            if ("Started training" in line) or (("Starting training" in line):
+            if ("Started training" in line) or ("Starting training" in line):
                 self.state.status = "training"
             
             if "Training steps:" in line:

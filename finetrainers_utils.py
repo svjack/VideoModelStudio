@@ -115,9 +115,13 @@ def copy_files_to_training_dir(prompt_prefix: str) -> int:
             
         # make sure we only copy over VALID pairs
         if caption:
-            target_caption_path.write_text(caption)
-            shutil.copy2(file_path, target_file_path)
-            nb_copied_pairs += 1
+            try:
+                target_caption_path.write_text(caption)
+                shutil.copy2(file_path, target_file_path)
+                nb_copied_pairs += 1
+            except Exception as e:
+                print(f"failed to copy one of the pairs: {e}")
+                pass
 
     prepare_finetrainers_dataset()
 

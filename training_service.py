@@ -23,15 +23,6 @@ from config import TrainingConfig, LOG_FILE_PATH, TRAINING_VIDEOS_PATH, STORAGE_
 from utils import make_archive, parse_training_log, is_image_file, is_video_file
 from finetrainers_utils import prepare_finetrainers_dataset, copy_files_to_training_dir
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler(str(LOG_FILE_PATH))
-    ]
-)
 logger = logging.getLogger(__name__)
 
 class TrainingService:
@@ -41,8 +32,69 @@ class TrainingService:
         self.status_file = OUTPUT_PATH / "status.json"
         self.pid_file = OUTPUT_PATH / "training.pid"
         self.log_file = OUTPUT_PATH / "training.log"
+
+        self.file_handler = None
+        self.setup_logging()
+
         logger.info("Training service initialized")
         
+    def setup_logging(self):
+        """Set up logging with proper handler management"""
+        global logger
+        logger = logging.getLogger(__name__)
+        logger.setLevel(logging.INFO)
+        
+        # Remove any existing handlers to avoid duplicates
+        logger.handlers.clear()
+        
+        # Add stdout handler
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        ))
+        logger.addHandler(stdout_handler)
+        
+        # Add file handler if log file is accessible
+        try:
+            # Close existing file handler if it exists
+            if self.file_handler:
+                self.file_handler.close()
+                logger.removeHandler(self.file_handler)
+            
+            self.file_handler = logging.FileHandler(str(LOG_FILE_PATH))
+            self.file_handler.setFormatter(logging.Formatter(
+                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            ))
+            logger.addHandler(self.file_handler)
+        except Exception as e:
+            logger.warning(f"Could not set up log file: {e}")
+
+    def clear_logs(self) -> None:
+        """Clear log file with proper handler cleanup"""
+        try:
+            # Remove and close the file handler
+            if self.file_handler:
+                logger.removeHandler(self.file_handler)
+                self.file_handler.close()
+                self.file_handler = None
+            
+            # Delete the file if it exists
+            if LOG_FILE_PATH.exists():
+                LOG_FILE_PATH.unlink()
+            
+            # Recreate logging setup
+            self.setup_logging()
+            self.append_log("Log file cleared and recreated")
+            
+        except Exception as e:
+            logger.error(f"Error clearing logs: {e}")
+            raise
+    
+    def __del__(self):
+        """Cleanup when the service is destroyed"""
+        if self.file_handler:
+            self.file_handler.close()
+    
     def save_session(self, params: Dict) -> None:
         """Save training session parameters"""
         session_data = {
@@ -73,7 +125,7 @@ class TrainingService:
         try:
             with open(self.status_file, 'r') as f:
                 status = json.load(f)
-                print("status found in the json:", status)
+                #print("status found in the json:", status)
                 
             # Check if process is actually running
             if self.pid_file.exists():
@@ -81,7 +133,7 @@ class TrainingService:
                     pid = int(f.read().strip())
                 if not psutil.pid_exists(pid):
                     # Process died unexpectedly
-                    if status['status'] == 'running':
+                    if status['status'] == 'training':
                         status['status'] = 'error'
                         status['message'] = 'Training process terminated unexpectedly'
                         self.append_log("Training process terminated unexpectedly")
@@ -302,7 +354,7 @@ class TrainingService:
             # Update initial training status
             total_steps = num_epochs * (max(1, video_count) // batch_size)
             self.save_status(
-                state='running',
+                state='training',
                 epoch=0,
                 step=0,
                 total_steps=total_steps,
@@ -389,7 +441,7 @@ class TrainingService:
                 
             if psutil.pid_exists(pid):
                 os.kill(pid, signal.SIGUSR2)  # Signal to resume
-                self.save_status(state='running', message='Training resumed')
+                self.save_status(state='training', message='Training resumed')
                 self.append_log("Training resumed")
                 
             return "Training resumed", self.get_logs()
@@ -437,6 +489,13 @@ class TrainingService:
             'timestamp': datetime.now().isoformat(),
             **kwargs
         }
+        if state === "Training started" or state == "initializing":
+            gr.Info("Initializing model and dataset..")
+        elif state == "training":
+            gr.Info("Training started!")
+        elif state == "completed":
+            gr.Info("Training completed!")
+
         with open(self.status_file, 'w') as f:
             json.dump(status, f, indent=2)
 

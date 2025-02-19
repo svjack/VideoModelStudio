@@ -125,8 +125,6 @@ class VideoTrainerUI:
             # Stop captioning if running
             if self.captioner:
                 self.captioner.stop_captioning()
-                #self.captioner.close()
-                #self.captioner = None
                 status_messages["captioning"] = "Captioning stopped"
             
             # Stop scene detection if running
@@ -134,6 +132,12 @@ class VideoTrainerUI:
                 self.splitter.processing = False
                 status_messages["splitting"] = "Scene detection stopped"
             
+            # Properly close logging before clearing log file
+            if self.trainer.file_handler:
+                self.trainer.file_handler.close()
+                logger.removeHandler(self.trainer.file_handler)
+                self.trainer.file_handler = None
+                
             if LOG_FILE_PATH.exists():
                 LOG_FILE_PATH.unlink()
             
@@ -153,6 +157,9 @@ class VideoTrainerUI:
             self._should_stop_captioning = True
             self.splitter.processing = False
             
+            # Recreate logging setup
+            self.trainer.setup_logging()
+            
             return {
                 "status": "All processes stopped and data cleared",
                 "details": status_messages
@@ -163,7 +170,7 @@ class VideoTrainerUI:
                 "status": f"Error during cleanup: {str(e)}",
                 "details": status_messages
             }
-        
+    
     def update_titles(self) -> Tuple[Any]:
         """Update all dynamic titles with current counts
         
@@ -664,20 +671,20 @@ class VideoTrainerUI:
                 with gr.TabItem("1️⃣  Import", id="import_tab"):
 
                     with gr.Row():
-                        gr.Markdown("## Optional: automated data cleaning")
+                        gr.Markdown("## Automatic splitting and captioning")
                     
                     with gr.Row():
                         enable_automatic_video_split = gr.Checkbox(
                             label="Automatically split videos into smaller clips",
                             info="Note: a clip is a single camera shot, usually a few seconds",
                             value=True,
-                            visible=False
+                            visible=True
                         )
                         enable_automatic_content_captioning = gr.Checkbox(
                             label="Automatically caption photos and videos",
                             info="Note: this uses LlaVA and takes some extra time to load and process",
                             value=False,
-                            visible=False,
+                            visible=True,
                         )
                         
                     with gr.Row():
@@ -889,13 +896,14 @@ class VideoTrainerUI:
                                         interactive=False,
                                         lines=4
                                     )
-                                    log_box = gr.TextArea(
-                                        label="Training Logs",
-                                        interactive=False,
-                                        lines=10,
-                                        max_lines=40,
-                                        autoscroll=True
-                                    )
+                                    with gr.Accordion("See training logs"):
+                                        log_box = gr.TextArea(
+                                            label="Finetrainers output (see HF Space logs for more details)",
+                                            interactive=False,
+                                            lines=40,
+                                            max_lines=200,
+                                            autoscroll=True
+                                        )
 
                 with gr.TabItem("5️⃣  Manage"):
 
