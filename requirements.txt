@@ -1,0 +1,43 @@
+numpy>=1.26.4
+
+# to quote a-r-r-o-w/finetrainers:
+# It is recommended to use Pytorch 2.5.1 or above for training. Previous versions can lead to completely black videos, OOM errors, or other issues and are not tested.
+torch==2.5.1
+torchvision==0.20.1
+torchao==0.6.1
+
+huggingface_hub
+hf_transfer>=0.1.8
+diffusers>=0.30.3
+transformers>=4.45.2
+
+accelerate
+bitsandbytes
+peft>=0.12.0
+eva-decord==0.6.1
+wandb
+pandas
+sentencepiece>=0.2.0
+imageio-ffmpeg>=0.5.1
+
+flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.4cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+
+# for youtube video download
+pytube
+pytubefix
+
+# for scene splitting
+scenedetect[opencv]
+
+# for llava video / captionning
+pillow
+pillow-avif-plugin
+polars
+einops
+open_clip_torch
+av==14.1.0
+git+https://github.com/LLaVA-VL/LLaVA-NeXT.git
+
+# for our frontend
+gradio==5.15.0
+gradio_toggle
