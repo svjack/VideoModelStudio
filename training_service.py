@@ -489,7 +489,7 @@ class TrainingService:
             'timestamp': datetime.now().isoformat(),
             **kwargs
         }
-        if state === "Training started" or state == "initializing":
+        if state == "Training started" or state == "initializing":
             gr.Info("Initializing model and dataset..")
         elif state == "training":
             gr.Info("Training started!")
