@@ -263,15 +263,15 @@ class VideoTrainerUI:
         is_completed = training_state["status"] in ["completed", "error", "stopped"]
         
         return {
-            start_btn: gr.Button(
+            "start_btn": gr.Button(
                 interactive=not is_training and not is_paused,
                 variant="primary" if not is_training else "secondary",
             ),
-            stop_btn: gr.Button(
+            "stop_btn": gr.Button(
                 interactive=is_training or is_paused,
                 variant="stop",
             ),
-            pause_resume_btn: gr.Button(
+            "pause_resume_btn": gr.Button(
                 value="Resume Training" if is_paused else "Pause Training",
                 interactive=(is_training or is_paused) and not is_completed,
                 variant="secondary",
