@@ -1,3 +1,18 @@
+```bash
+sudo apt-get update && sudo apt-get install git-lfs ffmpeg cbm
+
+conda create --name py310 python=3.10
+conda activate py310
+pip install ipykernel
+python -m ipykernel install --user --name py310 --display-name "py310"
+
+git clone https://github.com/jbilcke-hf/VideoModelStudio && cd VideoModelStudio
+pip install -r requirements.txt
+pip install "httpx[socks]"
+
+python app.py
+```
+
 ---
 title: Video Model Studio
 emoji: 🎥
