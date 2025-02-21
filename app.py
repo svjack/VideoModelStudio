@@ -1251,5 +1251,6 @@ if __name__ == "__main__":
     ]
     app.queue(default_concurrency_limit=1).launch(
         server_name="0.0.0.0",
-        allowed_paths=allowed_paths
+        allowed_paths=allowed_paths,
+        share = True
     )
