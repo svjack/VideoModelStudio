@@ -73,6 +73,7 @@ class SplittingService:
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir) / f"preprocessed_{video_path.name}"
 
+                was_cropped = False
                 '''
                 # Try to remove black bars
                 was_cropped = await asyncio.get_event_loop().run_in_executor(
