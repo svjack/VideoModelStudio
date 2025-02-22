@@ -1,17 +1,133 @@
+# VideoModelStudio - Genshin Impact Style Environment
+
+Welcome to the **VideoModelStudio** project! This guide will walk you through the setup and usage of the project in a Genshin Impact-inspired style. Follow the steps below to get started.
+
+---
+
+## Prerequisites
+
+Before you begin, ensure your system has the necessary dependencies installed. Run the following commands:
+
 ```bash
 sudo apt-get update && sudo apt-get install git-lfs ffmpeg cbm
+```
 
-conda create --name py310 python=3.10
-conda activate py310
-pip install ipykernel
-python -m ipykernel install --user --name py310 --display-name "py310"
+---
 
-git clone https://github.com/svjack/VideoModelStudio && cd VideoModelStudio
-pip install -r requirements.txt
-pip install "httpx[socks]"
+## Installation
 
+1. Clone the repository and navigate to the project directory:
+
+   ```bash
+   git clone https://github.com/svjack/VideoModelStudio && cd VideoModelStudio
+   ```
+
+2. Install the required Python packages:
+
+   ```bash
+   pip install -r requirements.txt
+   pip install "httpx[socks]"
+   ```
+
+---
+
+## Running the Application
+
+To start the application, simply run:
+
+```bash
 python app.py
 ```
+
+---
+
+## Dataset Preparation
+
+The dataset should be generated and placed in the `.data/staging` directory. Ensure your dataset is structured correctly before proceeding to training.
+
+---
+
+## Training the Model
+
+To train the model, use the following command with `accelerate launch`. This configuration is optimized for mixed precision training and LoRA (Low-Rank Adaptation) fine-tuning.
+
+```bash
+accelerate launch \
+  --mixed_precision=bf16 \
+  --num_processes=1 \
+  --num_machines=1 \
+  --dynamo_backend=no \
+  /home/featurize/VideoModelStudio/train.py \
+  --model_name ltx_video \
+  --pretrained_model_name_or_path Lightricks/LTX-Video \
+  --data_root .data/training \
+  --video_column videos.txt \
+  --caption_column prompts.txt \
+  --id_token BW_STYLE \
+  --video_resolution_buckets 1x512x768 9x512x768 17x512x768 33x512x768 49x512x768 65x512x768 81x512x768 97x512x768 113x512x768 129x512x768 145x512x768 161x512x768 177x512x768 193x512x768 225x512x768 257x512x768 \
+  --video_reshape_mode center \
+  --caption_dropout_p 0.05 \
+  --caption_dropout_technique empty \
+  --flow_weighting_scheme logit_normal \
+  --flow_logit_mean 0.0 \
+  --flow_logit_std 1.0 \
+  --flow_mode_scale 1.29 \
+  --training_type lora \
+  --seed 42 \
+  --batch_size 1 \
+  --train_epochs 70 \
+  --rank 128 \
+  --lora_alpha 128 \
+  --target_modules to_q to_k to_v to_out.0 \
+  --gradient_accumulation_steps 4 \
+  --gradient_checkpointing \
+  --checkpointing_steps 500 \
+  --checkpointing_limit 2 \
+  --enable_slicing \
+  --enable_tiling \
+  --optimizer adamw \
+  --lr 3e-05 \
+  --lr_scheduler constant_with_warmup \
+  --lr_warmup_steps 100 \
+  --lr_num_cycles 1 \
+  --lr_power 1.0 \
+  --beta1 0.9 \
+  --beta2 0.95 \
+  --weight_decay 0.0001 \
+  --epsilon 1e-08 \
+  --max_grad_norm 1.0 \
+  --tracker_name finetrainers \
+  --output_dir .data/output \
+  --report_to none \
+  --nccl_timeout 1800 \
+  --remove_common_llm_caption_prefixes
+```
+
+### Key Parameters Explained:
+- **`--mixed_precision=bf16`**: Enables mixed precision training using bfloat16.
+- **`--training_type lora`**: Uses LoRA for fine-tuning.
+- **`--batch_size 1`**: Sets the batch size to 1.
+- **`--train_epochs 70`**: Trains the model for 70 epochs.
+- **`--lr 3e-05`**: Sets the learning rate to 3e-05.
+- **`--output_dir .data/output`**: Specifies the output directory for training results.
+
+---
+
+## Notes
+
+- Ensure your dataset is properly formatted and placed in the correct directory before starting the training process.
+- Adjust the parameters as needed to fit your specific use case.
+- For troubleshooting, refer to the project's GitHub repository or open an issue.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+Enjoy your journey through the world of **VideoModelStudio**! 🌟
 
 ---
 title: Video Model Studio
