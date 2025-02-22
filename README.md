@@ -45,6 +45,7 @@ python app.py
 
 ## Dataset Preparation
 
+### Genshin Impact Env
 ```python
 from moviepy.editor import VideoFileClip
 from moviepy.video.fx import resize
@@ -106,6 +107,115 @@ output_video = "《原神》风物集短片-蒙德篇-768x512.mp4"
 target_resolution = (768, 512)  # Desired resolution (width x height)
 
 change_video_resolution_with_padding(input_video, output_video, target_resolution)
+```
+
+### Pixel Video
+```python
+from datasets import load_dataset
+import os
+from moviepy.editor import VideoFileClip, ImageSequenceClip
+from moviepy.video.fx import resize
+
+def change_video_resolution_with_padding(input_video_path, output_video_path, target_resolution):
+    """
+    Resize a video to the target resolution while maintaining the aspect ratio.
+    Adds black padding (letterboxing) to fill the remaining space.
+
+    Args:
+        input_video_path (str): Path to the input video file.
+        output_video_path (str): Path to save the output video file.
+        target_resolution (tuple): Target resolution as a tuple (width, height), e.g., (768, 512).
+    """
+    # Load the video
+    video_clip = VideoFileClip(input_video_path)
+
+    # Get the original dimensions
+    original_width, original_height = video_clip.size
+
+    # Calculate the aspect ratio of the original video
+    original_aspect_ratio = original_width / original_height
+
+    # Calculate the aspect ratio of the target resolution
+    target_width, target_height = target_resolution
+    target_aspect_ratio = target_width / target_height
+
+    # Determine the new dimensions while maintaining the aspect ratio
+    if original_aspect_ratio > target_aspect_ratio:
+        # Video is wider than the target, so scale based on width
+        new_width = target_width
+        new_height = int(new_width / original_aspect_ratio)
+    else:
+        # Video is taller than the target, so scale based on height
+        new_height = target_height
+        new_width = int(new_height * original_aspect_ratio)
+
+    # Resize the video to the new dimensions using the correct resize method
+    resized_clip = video_clip.fx(resize.resize, (new_width, new_height))
+
+    # Add black padding to fill the target resolution
+    padded_clip = resized_clip.margin(
+        left=(target_width - new_width) // 2,
+        right=(target_width - new_width) // 2,
+        top=(target_height - new_height) // 2,
+        bottom=(target_height - new_height) // 2,
+        color=(0, 0, 0)  # Black padding
+    )
+
+    # Save the padded video
+    padded_clip.write_videofile(output_video_path, codec="libx264")
+
+    # MoviePy automatically manages resources, so no need to manually close clips
+
+
+def process_dataset(input_dataset, output_dir, target_res=(768, 512)):
+    """
+    Process each video in the dataset, resize it, and save it to the output directory.
+
+    Args:
+        input_dataset (Dataset): The dataset containing videos.
+        output_dir (str): Directory to save the resized videos.
+        target_res (tuple): Target resolution as a tuple (width, height), e.g., (768, 512).
+    """
+    # Create the output directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Iterate over each sample in the dataset
+    for idx, sample in enumerate(input_dataset):
+        try:
+            # Generate a unique output file name
+            output_path = os.path.join(output_dir, f"resized_video_{idx}.mp4")
+
+            # Extract frames from the Decord VideoReader object
+            frames = [sample["video"][i].asnumpy() for i in range(len(sample["video"]))]
+
+            # Create a temporary video clip from the frames
+            temp_clip = ImageSequenceClip(frames, fps=sample["video"].get_avg_fps())
+
+            # Save the temporary video clip to a file
+            temp_path = f"temp_{idx}.mp4"
+            temp_clip.write_videofile(temp_path, verbose=False)
+
+            # Resize the video and add padding
+            change_video_resolution_with_padding(temp_path, output_path, target_res)
+
+            # Clean up the temporary file
+            os.remove(temp_path)
+
+            print(f"Processed video {idx} and saved to {output_path}")
+
+        except Exception as e:
+            print(f"Error processing video {idx}: {str(e)}")
+
+
+# Load the dataset
+ds = load_dataset("svjack/test-HunyuanVideo-pixelart-videos")
+
+# Process the training set
+process_dataset(ds["train"], "resized_videos_output")
+
+# (Optional) Process the validation and test sets
+# process_dataset(ds["validation"], "resized_videos_val_output")
+# process_dataset(ds["test"], "resized_videos_test_output")
 ```
 
 The dataset should be generated and placed in the `.data/staging` directory. Ensure your dataset is structured correctly before proceeding to training.
