@@ -25,6 +25,7 @@ sudo apt-get update && sudo apt-get install git-lfs ffmpeg cbm
 2. Install the required Python packages:
 
    ```bash
+   conda install python=3.10
    pip install -r requirements.txt
    pip install "httpx[socks]"
    pip install moviepy==1.0.3
