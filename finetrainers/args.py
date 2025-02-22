@@ -347,7 +347,8 @@ class Args:
     logging_dir: Optional[str] = "logs"
     allow_tf32: bool = False
     nccl_timeout: int = 1800  # 30 minutes
-    report_to: str = "wandb"
+    #report_to: str = "wandb"
+    report_to: str = "none"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
