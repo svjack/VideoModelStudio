@@ -72,7 +72,8 @@ class SplittingService:
             # Create temporary directory for preprocessed video
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_path = Path(temp_dir) / f"preprocessed_{video_path.name}"
-                
+
+                '''
                 # Try to remove black bars
                 was_cropped = await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -80,9 +81,11 @@ class SplittingService:
                     video_path,
                     temp_path
                 )
+                '''
                 
                 # Use preprocessed video if cropping was done, otherwise use original
-                process_path = temp_path if was_cropped else video_path
+                #process_path = temp_path if was_cropped else video_path
+                process_path = video_path
                 
                 # Detect scenes if splitting is enabled
                 if enable_splitting:
