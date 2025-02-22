@@ -216,6 +216,8 @@ process_dataset(ds["train"], "resized_videos_output")
 # (Optional) Process the validation and test sets
 # process_dataset(ds["validation"], "resized_videos_val_output")
 # process_dataset(ds["test"], "resized_videos_test_output")
+
+!zip -r resized_videos_output.zip resized_videos_output
 ```
 
 The dataset should be generated and placed in the `.data/staging` directory. Ensure your dataset is structured correctly before proceeding to training.
