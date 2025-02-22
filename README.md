@@ -280,6 +280,58 @@ accelerate launch \
   --remove_common_llm_caption_prefixes
 ```
 
+```bash
+accelerate launch \
+  --mixed_precision=bf16 \
+  --num_processes=1 \
+  --num_machines=1 \
+  --dynamo_backend=no \
+  /home/featurize/VideoModelStudio/train.py \
+  --model_name hunyuan_video \
+  --pretrained_model_name_or_path hunyuanvideo-community/HunyuanVideo \
+  --data_root .data/training \
+  --video_column videos.txt \
+  --caption_column prompts.txt \
+  --id_token afkx \
+  --video_resolution_buckets 1x384x640 9x384x640 17x384x640 33x384x640  \
+  --video_reshape_mode center \
+  --caption_dropout_p 0.05 \
+  --caption_dropout_technique empty \
+  --flow_weighting_scheme none \
+  --flow_logit_mean 0.0 \
+  --flow_logit_std 1.0 \
+  --flow_mode_scale 1.29 \
+  --training_type lora \
+  --seed 42 \
+  --batch_size 1 \
+  --train_epochs 30 \
+  --rank 128 \
+  --lora_alpha 128 \
+  --target_modules to_q to_k to_v to_out.0 \
+  --gradient_accumulation_steps 1 \
+  --gradient_checkpointing \
+  --checkpointing_steps 100 \
+  --checkpointing_limit 10 \
+  --enable_slicing \
+  --enable_tiling \
+  --optimizer adamw \
+  --lr 2e-05 \
+  --lr_scheduler constant_with_warmup \
+  --lr_warmup_steps 100 \
+  --lr_num_cycles 1 \
+  --lr_power 1.0 \
+  --beta1 0.9 \
+  --beta2 0.95 \
+  --weight_decay 0.0001 \
+  --epsilon 1e-08 \
+  --max_grad_norm 1.0 \
+  --tracker_name finetrainers \
+  --output_dir .data/output \
+  --report_to none \
+  --nccl_timeout 1800 \
+  --remove_common_llm_caption_prefixes
+```
+
 ### Key Parameters Explained:
 - **`--mixed_precision=bf16`**: Enables mixed precision training using bfloat16.
 - **`--training_type lora`**: Uses LoRA for fine-tuning.
