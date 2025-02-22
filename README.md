@@ -146,8 +146,8 @@ accelerate launch \
   --target_modules to_q to_k to_v to_out.0 \
   --gradient_accumulation_steps 4 \
   --gradient_checkpointing \
-  --checkpointing_steps 500 \
-  --checkpointing_limit 2 \
+  --checkpointing_steps 100 \
+  --checkpointing_limit 10 \
   --enable_slicing \
   --enable_tiling \
   --optimizer adamw \
