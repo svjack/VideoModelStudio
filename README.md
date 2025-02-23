@@ -351,6 +351,53 @@ accelerate launch \
 
 ---
 
+```python
+import torch
+from diffusers import HunyuanVideoPipeline, HunyuanVideoTransformer3DModel
+from diffusers import GGUFQuantizationConfig
+from diffusers.utils import export_to_video
+from IPython import display
+
+repo_id = "hunyuanvideo-community/HunyuanVideo"
+# hunyuan-video-t2v-720p-Q3_K_M.gguf
+transformer_path = f"https://huggingface.co/city96/HunyuanVideo-gguf/blob/main/hunyuan-video-t2v-720p-Q3_K_S.gguf"
+
+transformer = HunyuanVideoTransformer3DModel.from_single_file(
+    transformer_path,
+    quantization_config=GGUFQuantizationConfig(compute_dtype=torch.bfloat16),
+    torch_dtype=torch.bfloat16,
+)
+
+pipe = HunyuanVideoPipeline.from_pretrained(
+    repo_id,
+    transformer=transformer,
+    torch_dtype=torch.float16
+)
+
+# Lora https://civitai.com/models/1064343/hunyuan-video-lora-animeshots
+# rename the lora after manual downloading
+pipe.load_lora_weights("output/checkpoint-600/pytorch_lora_weights.safetensors", adapter_name="pixel")
+pipe.set_adapters("pixel", 2.0)
+
+pipe.enable_model_cpu_offload()
+pipe.vae.enable_tiling()
+pipe.vae.enable_slicing()
+#pipe.to("cuda")
+
+prompt = "In the style of Pixel ,The video showcases a charming anime-style scene featuring a pink-haired girl with angel wings. She's seated at a desk, enjoying a donut while working on a laptop. The setting is a cozy, pastel-colored room with a pink chair, a milk carton, and a coffee cup. The girl's expression is one of delight as she savors her treat."
+
+video = pipe(
+	prompt = prompt,
+    height=544,
+	width=960,
+	num_frames=60,
+	num_inference_steps=20,
+	generator=torch.Generator(device='cuda').manual_seed(0),
+).frames[0]
+export_to_video(video, "hun.mp4", fps=8)
+display.Video("hun.mp4")
+```
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
