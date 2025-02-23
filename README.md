@@ -377,7 +377,7 @@ pipe = HunyuanVideoPipeline.from_pretrained(
 # Lora https://civitai.com/models/1064343/hunyuan-video-lora-animeshots
 # rename the lora after manual downloading
 pipe.load_lora_weights("output/checkpoint-600/pytorch_lora_weights.safetensors", adapter_name="pixel")
-pipe.set_adapters("pixel", 2.0)
+pipe.set_adapters("pixel", 1.0)
 
 pipe.enable_model_cpu_offload()
 pipe.vae.enable_tiling()
