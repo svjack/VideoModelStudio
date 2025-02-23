@@ -26,6 +26,7 @@ sudo apt-get update && sudo apt-get install git-lfs ffmpeg cbm
 
    ```bash
    conda install python=3.10
+   pip install ipykernel
    pip install -r requirements.txt
    pip install "httpx[socks]"
    pip install moviepy==1.0.3
