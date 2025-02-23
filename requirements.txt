@@ -5,7 +5,7 @@ numpy>=1.26.4
 #torch==2.5.1
 #torchvision==0.20.1
 #torchao==0.6.1
-torch
+torch==2.5.1
 torchvision
 torchao
 
@@ -45,3 +45,5 @@ git+https://github.com/LLaVA-VL/LLaVA-NeXT.git
 # for our frontend
 gradio==5.15.0
 gradio_toggle
+
+GGUF>=0.10.0
