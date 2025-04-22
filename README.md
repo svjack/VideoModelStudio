@@ -30,6 +30,7 @@ sudo apt-get update && sudo apt-get install git-lfs ffmpeg cbm
    pip install -r requirements.txt
    pip install "httpx[socks]"
    pip install moviepy==1.0.3
+   pip install -U gradio
    ```
 
 ---
